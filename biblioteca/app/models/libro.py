@@ -1,46 +1,65 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy import inspect as sa_inspect
+"""Modelo de libros."""
+
+from typing import Optional
+
+from sqlalchemy import ForeignKey, Integer, String, inspect as sa_inspect, text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.core.database import Base
 from app.models.libro_categoria import libro_categoria
 
 
 class Libro(Base):
+    """Libro disponible en la biblioteca."""
+
     __tablename__ = "libros"
 
-    id = Column(Integer, primary_key=True, index=True)
-    titulo = Column(String(150), nullable=False)
-    isbn = Column(String(13), unique=True, nullable=False)
-    anio_publicacion = Column(Integer, nullable=False)
-    ejemplares = Column(Integer, nullable=False, default=1)
-    autor_id = Column(Integer, ForeignKey("autores.id"), nullable=False)
-
-    autor = relationship("Autor", back_populates="libros")
-    categorias = relationship(
-        "Categoria", secondary=libro_categoria, back_populates="libros"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    titulo: Mapped[str] = mapped_column(String(150), nullable=False)
+    isbn: Mapped[str] = mapped_column(String(13), unique=True, nullable=False)
+    anio_publicacion: Mapped[int] = mapped_column(Integer, nullable=False)
+    ejemplares: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default=text("1")
     )
-    prestamos = relationship("Prestamo", back_populates="libro")
+    autor_id: Mapped[int] = mapped_column(
+        ForeignKey("autores.id"), nullable=False
+    )
+
+    autor: Mapped[Optional["Autor"]] = relationship(
+        "Autor", back_populates="libros"
+    )
+    categorias: Mapped[list["Categoria"]] = relationship(
+        "Categoria",
+        secondary=libro_categoria,
+        back_populates="libros",
+    )
+    prestamos: Mapped[list["Prestamo"]] = relationship(
+        "Prestamo", back_populates="libro"
+    )
 
     @property
     def disponibles(self) -> int:
-        """Devuelve disponibles:
-        1. Si _enriquecer ya lo asignó, usa ese valor.
-        2. Si la relación prestamos está cargada, lo calcula.
-        3. Fallback: devuelve ejemplares.
+        """Cantidad de ejemplares que no están prestados.
+
+        1. Si el controlador ya calculó el valor, se reutiliza.
+        2. Si la relación de préstamos está cargada, se calcula.
+        3. Si no, se devuelve el total de ejemplares.
         """
-        # _enriquecer del controller asigna el valor en __dict__
-        val = self.__dict__.get("_disponibles")
-        if val is not None:
-            return val
-        # Si prestamos está cargado en la sesión, calcular
-        state = sa_inspect(self)
-        if "prestamos" not in state.unloaded:
-            activos = sum(1 for p in self.prestamos if p.fecha_devolucion is None)
+        valor = self.__dict__.get("_disponibles")
+        if valor is not None:
+            return valor
+
+        estado = sa_inspect(self)
+        if "prestamos" not in estado.unloaded:
+            activos = sum(
+                1 for prestamo in self.prestamos
+                if prestamo.fecha_devolucion is None
+            )
             return self.ejemplares - activos
-        # Fallback conservador
+
         return self.ejemplares
 
     @disponibles.setter
-    def disponibles(self, value: int) -> None:
-        """Permite que _enriquecer asigne el valor calculado por SQL."""
-        self.__dict__["_disponibles"] = value
+    def disponibles(self, valor: int) -> None:
+        """Permite que el controlador asigne el valor calculado por SQL."""
+        self.__dict__["_disponibles"] = valor

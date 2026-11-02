@@ -1,8 +1,11 @@
+"""Esquemas de los reportes del Taller 1."""
+
 from pydantic import BaseModel
-from typing import Optional
 
 
 class LibroMasPrestado(BaseModel):
+    """Libro con su total de préstamos."""
+
     libro_id: int
     titulo: str
     autor: str
@@ -12,6 +15,8 @@ class LibroMasPrestado(BaseModel):
 
 
 class CategoriaTotalLibros(BaseModel):
+    """Cantidad de libros por categoría."""
+
     categoria_id: int
     nombre: str
     total_libros: int
@@ -20,6 +25,8 @@ class CategoriaTotalLibros(BaseModel):
 
 
 class PrestamoVencido(BaseModel):
+    """Préstamo sin devolver pasado su fecha límite."""
+
     prestamo_id: int
     titulo: str
     socio: str
@@ -31,6 +38,8 @@ class PrestamoVencido(BaseModel):
 
 
 class SocioConMulta(BaseModel):
+    """Socio con multas acumuladas."""
+
     socio_id: int
     nombre: str
     total_multas: float
@@ -40,6 +49,8 @@ class SocioConMulta(BaseModel):
 
 
 class AutorReporte(BaseModel):
+    """Totales de libros y préstamos por autor."""
+
     autor_id: int
     nombre: str
     total_libros: int
@@ -50,6 +61,8 @@ class AutorReporte(BaseModel):
 
 
 class ResumenBiblioteca(BaseModel):
+    """Resumen general de la biblioteca."""
+
     total_libros: int
     total_ejemplares: int
     total_prestados: int

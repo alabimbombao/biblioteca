@@ -1,4 +1,7 @@
-from sqlalchemy import Table, Column, Integer, ForeignKey
+"""Tabla intermedia entre libros y categorías (relación muchos a muchos)."""
+
+from sqlalchemy import Column, ForeignKey, Integer, Table
+
 from app.core.database import Base
 
 libro_categoria = Table(

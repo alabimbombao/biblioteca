@@ -1,46 +1,75 @@
+"""Controlador de categorías."""
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+
+from app.core.exceptions import Conflicto, NoEncontrado
 from app.models.categoria import Categoria
 from app.schemas.categoria import CategoriaCreate, CategoriaUpdate
-from app.core.exceptions import Conflicto, NoEncontrado
 
 
-def listar_categorias(db: Session, skip: int, limit: int):
-    return db.query(Categoria).offset(skip).limit(limit).all()
+def listar_categorias(
+    db: Session, skip: int, limit: int
+) -> tuple[list[Categoria], int]:
+    """Devuelve una página de categorías y el total."""
+    consulta = select(Categoria)
+    total = db.scalar(
+        select(func.count()).select_from(consulta.subquery())
+    ) or 0
+    items = db.scalars(
+        consulta.order_by(Categoria.nombre).offset(skip).limit(limit)
+    ).all()
+    return list(items), total
 
 
 def obtener_categoria(db: Session, categoria_id: int) -> Categoria:
-    cat = db.get(Categoria, categoria_id)
-    if not cat:
+    """Busca una categoría o lanza 404."""
+    categoria = db.get(Categoria, categoria_id)
+    if not categoria:
         raise NoEncontrado(f"Categoria {categoria_id} no encontrada")
-    return cat
+    return categoria
 
 
 def crear_categoria(db: Session, datos: CategoriaCreate) -> Categoria:
-    if db.query(Categoria).filter(Categoria.nombre == datos.nombre).first():
+    """Crea una categoría si el nombre no está repetido."""
+    existe = db.scalar(
+        select(Categoria).where(Categoria.nombre == datos.nombre)
+    )
+    if existe:
         raise Conflicto(f"Ya existe la categoria '{datos.nombre}'")
-    cat = Categoria(**datos.model_dump())
-    db.add(cat)
+
+    categoria = Categoria(**datos.model_dump())
+    db.add(categoria)
     db.commit()
-    db.refresh(cat)
-    return cat
+    db.refresh(categoria)
+    return categoria
 
 
-def actualizar_categoria(db: Session, categoria_id: int, datos: CategoriaUpdate) -> Categoria:
-    cat = obtener_categoria(db, categoria_id)
+def actualizar_categoria(
+    db: Session, categoria_id: int, datos: CategoriaUpdate
+) -> Categoria:
+    """Actualiza los campos enviados de una categoría."""
+    categoria = obtener_categoria(db, categoria_id)
     cambios = datos.model_dump(exclude_unset=True)
-    if "nombre" in cambios and cambios["nombre"] != cat.nombre:
-        if db.query(Categoria).filter(Categoria.nombre == cambios["nombre"]).first():
+
+    if "nombre" in cambios and cambios["nombre"] != categoria.nombre:
+        existe = db.scalar(
+            select(Categoria).where(Categoria.nombre == cambios["nombre"])
+        )
+        if existe:
             raise Conflicto(f"Ya existe la categoria '{cambios['nombre']}'")
-    for k, v in cambios.items():
-        setattr(cat, k, v)
+
+    for campo, valor in cambios.items():
+        setattr(categoria, campo, valor)
+
     db.commit()
-    db.refresh(cat)
-    return cat
+    db.refresh(categoria)
+    return categoria
 
 
 def eliminar_categoria(db: Session, categoria_id: int) -> None:
-    cat = obtener_categoria(db, categoria_id)
-    # Quitar de todos los libros (relacion M:N)
-    cat.libros.clear()
-    db.delete(cat)
+    """Elimina una categoría y la desvincula de sus libros."""
+    categoria = obtener_categoria(db, categoria_id)
+    categoria.libros.clear()
+    db.delete(categoria)
     db.commit()
