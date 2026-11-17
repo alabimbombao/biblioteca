@@ -24,6 +24,12 @@ class Libro(Base):
     autor_id: Mapped[int] = mapped_column(
         ForeignKey("autores.id"), nullable=False
     )
+    portada_url: Mapped[Optional[str]] = mapped_column(
+        String(500), nullable=True, default=None
+    )
+    portada_public_id: Mapped[Optional[str]] = mapped_column(
+        String(200), nullable=True, default=None
+    )
 
     autor: Mapped[Optional["Autor"]] = relationship(
         "Autor", back_populates="libros"

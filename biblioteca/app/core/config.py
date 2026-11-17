@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     cors_origins: list[str] = []
     environment: Literal["dev", "test", "prod"] = "dev"
 
+    # Cloudinary
+    cloudinary_cloud_name: str
+    cloudinary_api_key: str
+    cloudinary_api_secret: str
+
     @property
     def es_produccion(self) -> bool:
         """Indica si la aplicación se ejecuta en producción."""

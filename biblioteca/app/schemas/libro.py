@@ -76,6 +76,7 @@ class LibroOut(BaseModel):
     anio_publicacion: int
     ejemplares: int
     disponibles: int
+    portada_url: str | None = None
     autor: AutorOut
     categorias: list[CategoriaOut]
 

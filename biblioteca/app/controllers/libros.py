@@ -188,3 +188,30 @@ def libros_de_autor(
         _enriquecer(libro, db)
 
     return list(libros), total
+
+
+def asignar_portada(
+    db: Session, libro_id: int, url: str, public_id: str
+) -> Libro:
+    """Persiste la URL y el public_id de la portada subida a Cloudinary."""
+    libro = obtener_libro(db, libro_id)
+    libro.portada_url = url
+    libro.portada_public_id = public_id
+    db.commit()
+    return obtener_libro(db, libro_id)
+
+
+def quitar_portada(db: Session, libro_id: int) -> Libro:
+    """Elimina la referencia a la portada en la base de datos.
+
+    La eliminación real del asset en Cloudinary es responsabilidad
+    del endpoint (que llama a cloudinary_client.eliminar_portada).
+    """
+    libro = obtener_libro(db, libro_id)
+    if not libro.portada_public_id:
+        raise ReglaNegocio("Este libro no tiene portada asignada")
+
+    libro.portada_url = None
+    libro.portada_public_id = None
+    db.commit()
+    return obtener_libro(db, libro_id)

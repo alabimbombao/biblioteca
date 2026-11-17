@@ -7,3 +7,4 @@ email-validator>=2.0
 pyjwt>=2.9
 pwdlib[argon2]>=0.2
 slowapi>=0.1.9
+cloudinary>=1.40

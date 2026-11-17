@@ -2,10 +2,11 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, UploadFile, File
 
 from app.controllers import libros as ctrl
 from app.controllers.libros import OrdenLibro
+from app.core.cloudinary_client import eliminar_portada, subir_portada
 from app.core.dependencies import PaginacionDep, SessionDep, SoloAdmin, Staff
 from app.routes.respuestas import RESPUESTAS_ADMIN, RESPUESTAS_PUBLICAS, RESPUESTAS_STAFF
 from app.schemas.libro import LibroCreate, LibroOut, LibroUpdate
@@ -123,3 +124,47 @@ def libros_de_autor(autor_id: int, pag: PaginacionDep, db: SessionDep):
         "skip": pag.skip,
         "limit": pag.limit,
     }
+
+
+@router.post(
+    "/libros/{libro_id}/portada",
+    response_model=LibroOut,
+    summary="Subir portada de un libro",
+    responses=RESPUESTAS_STAFF,
+)
+async def subir_portada_libro(
+    libro_id: int,
+    db: SessionDep,
+    _usuario: Staff,
+    archivo: Annotated[UploadFile, File(description="Imagen (jpg, png, webp · máx 5 MB)")],
+):
+    """Sube o reemplaza la portada de un libro en Cloudinary.
+
+    Acepta jpg, jpeg, png y webp. Tamaño máximo 5 MB.
+    Requiere rol bibliotecario o admin.
+    """
+    resultado = await subir_portada(archivo, libro_id)
+    return ctrl.asignar_portada(
+        db, libro_id, resultado["url"], resultado["public_id"]
+    )
+
+
+@router.delete(
+    "/libros/{libro_id}/portada",
+    response_model=LibroOut,
+    summary="Eliminar portada de un libro",
+    responses=RESPUESTAS_STAFF,
+)
+async def eliminar_portada_libro(
+    libro_id: int,
+    db: SessionDep,
+    _usuario: Staff,
+):
+    """Elimina la portada de un libro de Cloudinary y borra su referencia.
+
+    Requiere rol bibliotecario o admin.
+    """
+    libro = ctrl.obtener_libro(db, libro_id)
+    if libro.portada_public_id:
+        await eliminar_portada(libro.portada_public_id)
+    return ctrl.quitar_portada(db, libro_id)
