@@ -9,15 +9,9 @@ from app.models.usuario import RolUsuario
 
 
 def validar_password_fuerte(valor: str) -> str:
-    """Valida longitud y composición mínima de una contraseña."""
+    """Valida la longitud mínima de una contraseña (mínimo 8 caracteres)."""
     if not (8 <= len(valor) <= 64):
         raise ValueError("La contraseña debe tener entre 8 y 64 caracteres")
-    if not any(caracter.isupper() for caracter in valor):
-        raise ValueError("La contraseña debe tener al menos una mayúscula")
-    if not any(caracter.islower() for caracter in valor):
-        raise ValueError("La contraseña debe tener al menos una minúscula")
-    if not any(caracter.isdigit() for caracter in valor):
-        raise ValueError("La contraseña debe tener al menos un número")
     return valor
 
 

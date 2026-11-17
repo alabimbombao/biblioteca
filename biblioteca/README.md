@@ -52,6 +52,17 @@ biblioteca/
 └── README.md
 ```
 
+## Panel Web Interactivo y UX Mejorada
+
+El proyecto incluye un **Panel Visual de Gestión (Dashboard)** accesible directamente al abrir el servidor:
+- 🌐 **Panel Web:** `http://127.0.0.1:8000/` (o `/panel`)
+- 📚 **Catálogo visual:** portadas, badges de stock disponible, búsqueda por título y filtros por autor/categoría.
+- ⚡ **CRUD intuitivo:** selectores desplegables de autores y categorías por nombre (sin tener que adivinar o copiar IDs numéricos).
+- 🔄 **Préstamos y devoluciones en 1 clic:** cálculo de multas y estado de ejemplares en tiempo real.
+- 🔑 **Autenticación simplificada:** login rápido para Admin, Bibliotecario y Socios sin lidiar con tokens manuales.
+- 💻 **Consola interactiva:** ejecuta `python gestor_interactivo.py` para gestión guiada desde la terminal.
+
+
 ## Instalación
 
 ```bash

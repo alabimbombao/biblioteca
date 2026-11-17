@@ -6,11 +6,13 @@ se crea y modifica únicamente con las migraciones de Alembic.
 
 import logging
 import time
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -119,6 +121,7 @@ async def manejar_error_no_controlado(request: Request, exc: Exception):
     )
 
 
+# Routers de la API REST
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(autores.router, prefix="/api/v1")
@@ -128,3 +131,24 @@ app.include_router(socios.router, prefix="/api/v1")
 app.include_router(prestamos.router, prefix="/api/v1")
 app.include_router(reportes.router, prefix="/api/v1")
 app.include_router(usuario.router, prefix="/api/v1")
+
+# Servir interfaz web (dashboard) estático
+_RUTA_STATIC = Path(__file__).parent / "static"
+if _RUTA_STATIC.exists():
+    app.mount("/static", StaticFiles(directory=str(_RUTA_STATIC)), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def inicio_dashboard():
+    """Página principal: Panel visual interactivo de gestión."""
+    archivo_index = _RUTA_STATIC / "index.html"
+    if archivo_index.exists():
+        return FileResponse(archivo_index)
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/panel", include_in_schema=False)
+@app.get("/dashboard", include_in_schema=False)
+def redireccion_panel():
+    """Redirige al panel visual principal."""
+    return RedirectResponse(url="/")

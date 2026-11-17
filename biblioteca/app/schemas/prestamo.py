@@ -3,7 +3,7 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.libro import LibroOut
 from app.schemas.socio import SocioOut
@@ -12,10 +12,10 @@ from app.schemas.socio import SocioOut
 class PrestamoCreate(BaseModel):
     """Datos para registrar un préstamo."""
 
-    socio_id: int
-    libro_id: int
-    fecha_prestamo: date | None = None
-    dias: int = 14
+    socio_id: int = Field(..., description="ID del socio solicitante (ver /socios)", examples=[1])
+    libro_id: int = Field(..., description="ID del libro a prestar (ver /libros)", examples=[1])
+    fecha_prestamo: date | None = Field(None, description="Fecha de inicio (opcional, hoy por defecto)", examples=["2026-11-17"])
+    dias: int = Field(14, description="Plazo de préstamo en días (1 a 30)", examples=[14])
 
     @field_validator("dias")
     @classmethod
@@ -24,11 +24,29 @@ class PrestamoCreate(BaseModel):
             raise ValueError("dias debe estar entre 1 y 30")
         return valor
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "socio_id": 1,
+                "libro_id": 1,
+                "dias": 14,
+            }
+        }
+    }
+
 
 class PrestamoDevolucion(BaseModel):
     """Datos para registrar una devolución."""
 
-    fecha_devolucion: date | None = None
+    fecha_devolucion: date | None = Field(None, description="Fecha de devolución (opcional, hoy por defecto)", examples=["2026-11-17"])
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "fecha_devolucion": "2026-11-17",
+            }
+        }
+    }
 
 
 class PrestamoOut(BaseModel):

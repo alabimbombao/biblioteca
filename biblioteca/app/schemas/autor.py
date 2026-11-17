@@ -2,13 +2,13 @@
 
 import datetime
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class AutorBase(BaseModel):
-    nombre: str
-    nacionalidad: str | None = None
-    anio_nacimiento: int | None = None
+    nombre: str = Field(..., description="Nombre completo del autor (2-100 caracteres)", examples=["Gabriel García Márquez"])
+    nacionalidad: str | None = Field(None, description="Nacionalidad o país de origen", examples=["Colombiana"])
+    anio_nacimiento: int | None = Field(None, description="Año de nacimiento (1000 al año actual)", examples=[1927])
 
     @field_validator("nombre")
     @classmethod
@@ -29,13 +29,23 @@ class AutorBase(BaseModel):
 class AutorCreate(AutorBase):
     """Datos para crear un autor."""
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "nombre": "Gabriel García Márquez",
+                "nacionalidad": "Colombiana",
+                "anio_nacimiento": 1927,
+            }
+        }
+    }
+
 
 class AutorUpdate(BaseModel):
     """Datos para actualizar un autor."""
 
-    nombre: str | None = None
-    nacionalidad: str | None = None
-    anio_nacimiento: int | None = None
+    nombre: str | None = Field(None, description="Nuevo nombre del autor", examples=["Gabriel García Márquez"])
+    nacionalidad: str | None = Field(None, description="Nueva nacionalidad", examples=["Colombiana"])
+    anio_nacimiento: int | None = Field(None, description="Nuevo año de nacimiento", examples=[1927])
 
     @field_validator("nombre")
     @classmethod
@@ -43,6 +53,15 @@ class AutorUpdate(BaseModel):
         if valor is not None:
             return " ".join(valor.split()).title()
         return valor
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "nacionalidad": "Colombiana",
+                "anio_nacimiento": 1927,
+            }
+        }
+    }
 
 
 class AutorOut(AutorBase):
